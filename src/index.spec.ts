@@ -1,7 +1,21 @@
-import { allElements, array, boolean, emptyVal, member, nullVal, number, object, optional, or, ParseError, string, undefinedVal } from '.';
-
 import * as chai from 'chai';
 import { Err, Ok, Result } from 'ts-results';
+
+import {
+  allElements,
+  array,
+  boolean,
+  emptyVal,
+  member,
+  nullVal,
+  number,
+  object,
+  optional,
+  or,
+  ParseError,
+  string,
+  undefinedVal
+} from '.';
 
 const expect = chai.expect;
 
