@@ -75,24 +75,63 @@ export function nullVal(x: unknown): Result<null> {
 export type Parse<T> = (x: unknown) => Result<T>;
 
 export function or<T, U>(
-  x: unknown,
   p1: Parse<T>,
   p2: Parse<U>,
-): Result<T | U> {
-  const r1 = p1(x);
-  if (r1.ok === true) {
-    return new Ok(r1.val);
-  } else if (r1.ok === false) {
-    const r2 = p2(x);
-    if (r2.ok == true) {
-      return r2;
-    } else if (r2.ok === false) {
-      const expected = [r1.val.expected, r2.val.expected].join(" or ");
-      return new Err(pe("", expected, x));
+): Parse<T | U> {
+  return x => {
+    const r1 = p1(x);
+    if (r1.ok === true) {
+      return new Ok(r1.val);
+    } else if (r1.ok === false) {
+      const r2 = p2(x);
+      if (r2.ok == true) {
+        return r2;
+      } else if (r2.ok === false) {
+        const expected = [r1.val.expected, r2.val.expected].join(" or ");
+        return new Err(pe("", expected, x));
+      }
     }
   }
 }
 
 export function emptyVal<T>(x: unknown, produce: T): Result<T> {
-  return or(x, undefinedVal, nullVal).map(_ => produce);
+  return or(undefinedVal, nullVal)(x).map(_ => produce);
+}
+
+export function member<T>(
+  x: Record<string, unknown>,
+  name: string,
+  parse: Parse<T>,
+): Result<T> {
+  const result = parse(x[name]);
+  if (result.ok === true) {
+    return result;
+  } else if (result.ok === false) {
+    const err = result.val;
+    return new Err({
+      path: [name, err.path].join("."),
+      expected: err.expected,
+      found: err.found
+    });
+  }
+}
+
+export function allElements<T>(
+  array: unknown[],
+  parse: Parse<T>,
+): Result<T[]> {
+  const result = [];
+  for (let i = 0; i < array.length; ++i) {
+    const r = parse(array[i]);
+    if (r.ok === true) {
+      result.push(r.val);
+    } else if (r.ok === false) {
+      return new Err(pe(
+        `[${i}]`,
+        r.val.expected,
+        r.val.found,
+      ));
+    }
+  }
+  return new Ok(result);
 }

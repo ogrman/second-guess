@@ -1,7 +1,7 @@
-import { array, boolean, emptyVal, nullVal, number, object, or, ParseError, string, undefinedVal } from '.';
+import { allElements, array, boolean, emptyVal, member, nullVal, number, object, or, ParseError, string, undefinedVal } from '.';
 
 import * as chai from 'chai';
-import { Err, Ok } from 'ts-results';
+import { Err, Ok, Result } from 'ts-results';
 
 const expect = chai.expect;
 
@@ -93,21 +93,20 @@ describe("emptyVal", () => {
 
 describe("or", () => {
   it("should return the first success when both succeed", () => {
-    expect(or("something", x => new Ok(1), x => new Ok(2)).unwrap())
+    expect(or(x => new Ok(1), x => new Ok(2))("something").unwrap())
       .to.equal(1);
   });
 
   it("should return the second when first fails", () => {
     expect(or(
-      "something",
       x => new Err(null as ParseError),
       x => new Ok(2),
-    ).unwrap())
+    )("something").unwrap())
       .to.equal(2);
   });
 
   it("should combine both errors when both fail", () => {
-    const r = or("something", number, boolean);
+    const r = or(number, boolean)("something");
     if (r.ok === false) {
       const pe = r.val;
       expect(pe.expected).to.equal("number or boolean");
@@ -116,4 +115,32 @@ describe("or", () => {
       fail("expected parsing to fail");
     }
   });
+});
+
+describe("random use-case", () => {
+  it("should parse a simple structure", () => {
+    interface Test {
+      x: number,
+      y: string,
+      zz: (number | boolean)[],
+    };
+    const source: Test = {
+      x: 3,
+      y: "data",
+      zz: [5, false],
+    };
+    const result = object(source)
+      .map(record => {
+        return member(record, "x", number)
+          .andThen(x => member(record, "y", string)
+            .andThen(y => member(record, "zz", array)
+              .andThen(zz => allElements(zz, or(number, boolean))
+                .andThen(zz => ({
+                  x: x,
+                  y: y,
+                  zz: zz,
+                })))));
+      });
+    expect(source).to.eql(result.val);
+  }); 
 });
