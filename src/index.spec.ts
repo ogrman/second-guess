@@ -1,4 +1,4 @@
-import { allElements, array, boolean, emptyVal, member, nullVal, number, object, or, ParseError, string, undefinedVal } from '.';
+import { allElements, array, boolean, emptyVal, member, nullVal, number, object, optional, or, ParseError, string, undefinedVal } from '.';
 
 import * as chai from 'chai';
 import { Err, Ok, Result } from 'ts-results';
@@ -74,6 +74,17 @@ describe("nullVal", () => {
 
   it("should fail when not receiving null", () => {
     expect(nullVal(3).err).to.be.true;
+  });
+});
+
+describe("optional", () => {
+  it("should parse an optional value", () => {
+    expect(optional(string)("hello").unwrap()).to.equal("hello");
+    expect(optional(string)(undefined).unwrap()).to.equal(undefined);
+  });
+
+  it("should fail when parsing fails", () => {
+    expect(optional(string)(3).err).to.be.true;
   });
 });
 

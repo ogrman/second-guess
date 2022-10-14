@@ -1,7 +1,8 @@
 import { Ok, Err, Result as TsResult } from 'ts-results';
 import { indexedPath, memberPath } from './internal';
 
-type Result<T> = TsResult<T, ParseError>
+export type Result<T> = TsResult<T, ParseError>
+export type Parse<T> = (x: unknown) => Result<T>;
 
 export interface ParseError {
   path: string,
@@ -78,8 +79,6 @@ export function nullVal(x: unknown): Result<null> {
     return new Err(parseError("", "null", x));
   }
 }
-
-export type Parse<T> = (x: unknown) => Result<T>;
 
 export function or<T, U>(
   p1: Parse<T>,
