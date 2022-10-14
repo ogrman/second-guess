@@ -1,4 +1,5 @@
 import { Ok, Err, Result as TsResult } from 'ts-results';
+import { indexedPath, memberPath } from './internal';
 
 type Result<T> = TsResult<T, ParseError>
 
@@ -8,11 +9,17 @@ export interface ParseError {
   found: string,
 }
 
-function pe(path: string, expected: string, found: unknown): ParseError {
+function parseError(
+  path: string,
+  expected: string,
+  found: unknown,
+): ParseError {
   return {
     path: path,
     expected: expected,
-    found: JSON.stringify(found),
+    found: found === undefined
+      ? "undefined"
+      : JSON.stringify(found),
   };
 }
 
@@ -20,7 +27,7 @@ export function string(x: unknown): Result<string> {
   if (typeof x === "string") {
     return new Ok(x);
   } else {
-    return new Err(pe("", "string", x));
+    return new Err(parseError("", "string", x));
   }
 }
 
@@ -28,7 +35,7 @@ export function number(x: unknown): Result<number> {
   if (typeof x === "number") {
     return new Ok(x);
   } else {
-    return new Err(pe("", "number", x));
+    return new Err(parseError("", "number", x));
   }
 }
 
@@ -36,13 +43,13 @@ export function boolean(x: unknown): Result<boolean> {
   if (typeof x === "boolean") {
     return new Ok(x);
   } else {
-    return new Err(pe("", "boolean", x));
+    return new Err(parseError("", "boolean", x));
   }
 }
 
 export function object(x: unknown): Result<Record<string, unknown>> {
   if ((x instanceof Array) || !(x instanceof Object)) {
-    return new Err(pe("", "Object", x));
+    return new Err(parseError("", "Object", x));
   } else {
     return new Ok(x as Record<string, unknown>);
   }
@@ -50,7 +57,7 @@ export function object(x: unknown): Result<Record<string, unknown>> {
 
 export function array(x: unknown): Result<unknown[]> {
   if (!Array.isArray(x)) {
-    return new Err(pe("", "Array", x));
+    return new Err(parseError("", "Array", x));
   } else {
     return new Ok(x);
   }
@@ -60,7 +67,7 @@ export function undefinedVal(x: unknown): Result<undefined> {
   if (x === undefined) {
     return new Ok(x);
   } else {
-    return new Err(pe("", "undefined", x));
+    return new Err(parseError("", "undefined", x));
   }
 }
 
@@ -68,7 +75,7 @@ export function nullVal(x: unknown): Result<null> {
   if (x === null) {
     return new Ok(x);
   } else {
-    return new Err(pe("", "null", x));
+    return new Err(parseError("", "null", x));
   }
 }
 
@@ -88,10 +95,14 @@ export function or<T, U>(
         return r2;
       } else if (r2.ok === false) {
         const expected = [r1.val.expected, r2.val.expected].join(" or ");
-        return new Err(pe("", expected, x));
+        return new Err(parseError("", expected, x));
       }
     }
   }
+}
+
+export function optional<T>(parse: Parse<T>): Parse<T | undefined> {
+  return or(parse, undefinedVal);
 }
 
 export function emptyVal<T>(x: unknown, produce: T): Result<T> {
@@ -109,7 +120,7 @@ export function member<T>(
   } else if (result.ok === false) {
     const err = result.val;
     return new Err({
-      path: [name, err.path].join("."),
+      path: memberPath(name, err.path),
       expected: err.expected,
       found: err.found
     });
@@ -126,8 +137,28 @@ export function allElements<T>(
     if (r.ok === true) {
       result.push(r.val);
     } else if (r.ok === false) {
-      return new Err(pe(
-        `[${i}]`,
+      return new Err(parseError(
+        indexedPath(i, r.val.path),
+        r.val.expected,
+        r.val.found,
+      ));
+    }
+  }
+  return new Ok(result);
+}
+
+export function allKeys<T>(
+  record: Record<string, unknown>,
+  parse: Parse<T>,
+): Result<Record<string, T>> {
+  const result = {};
+  for (const key in record) {
+    const r = parse(record[key]);
+    if (r.ok === true) {
+      result[key] = r.val;
+    } else if (r.ok === false) {
+      return new Err(parseError(
+        indexedPath(key, r.val.path),
         r.val.expected,
         r.val.found,
       ));
