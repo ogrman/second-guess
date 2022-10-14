@@ -71,3 +71,28 @@ export function nullVal(x: unknown): Result<null> {
     return new Err(pe("", "null", x));
   }
 }
+
+export type Parse<T> = (x: unknown) => Result<T>;
+
+export function or<T, U>(
+  x: unknown,
+  p1: Parse<T>,
+  p2: Parse<U>,
+): Result<T | U> {
+  const r1 = p1(x);
+  if (r1.ok === true) {
+    return new Ok(r1.val);
+  } else if (r1.ok === false) {
+    const r2 = p2(x);
+    if (r2.ok == true) {
+      return r2;
+    } else if (r2.ok === false) {
+      const expected = [r1.val.expected, r2.val.expected].join(" or ");
+      return new Err(pe("", expected, x));
+    }
+  }
+}
+
+export function emptyVal<T>(x: unknown, produce: T): Result<T> {
+  return or(x, undefinedVal, nullVal).map(_ => produce);
+}

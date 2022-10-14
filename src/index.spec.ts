@@ -1,6 +1,7 @@
-import { array, boolean, nullVal, number, object, string, undefinedVal } from '.';
+import { array, boolean, emptyVal, nullVal, number, object, or, ParseError, string, undefinedVal } from '.';
 
 import * as chai from 'chai';
+import { Err, Ok } from 'ts-results';
 
 const expect = chai.expect;
 
@@ -73,5 +74,46 @@ describe("nullVal", () => {
 
   it("should fail when not receiving null", () => {
     expect(nullVal(3).err).to.be.true;
+  });
+});
+
+describe("emptyVal", () => {
+  it("should parse null", () => {
+    expect(emptyVal(null, undefined).unwrap()).to.eql(undefined);
+  });
+
+  it("should parse undefined", () => {
+    expect(emptyVal(undefined, null).unwrap()).to.eql(null);
+  });
+
+  it("should fail when value is non-empty", () => {
+    expect(emptyVal(3, null).err).to.be.true;
+  });
+});
+
+describe("or", () => {
+  it("should return the first success when both succeed", () => {
+    expect(or("something", x => new Ok(1), x => new Ok(2)).unwrap())
+      .to.equal(1);
+  });
+
+  it("should return the second when first fails", () => {
+    expect(or(
+      "something",
+      x => new Err(null as ParseError),
+      x => new Ok(2),
+    ).unwrap())
+      .to.equal(2);
+  });
+
+  it("should combine both errors when both fail", () => {
+    const r = or("something", number, boolean);
+    if (r.ok === false) {
+      const pe = r.val;
+      expect(pe.expected).to.equal("number or boolean");
+      expect(pe.found).to.equal(JSON.stringify("something"));
+    } else {
+      fail("expected parsing to fail");
+    }
   });
 });
