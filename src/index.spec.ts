@@ -106,15 +106,11 @@ describe("or", () => {
   });
 
   it("should combine both errors when both fail", () => {
-    const r = or(number, boolean)("something");
-    
-    if (r.ok === false) {
-      const pe = r.val;
+    const r = or(number, boolean)("something").mapErr(pe => {
       expect(pe.expected).to.equal("number or boolean");
       expect(pe.found).to.equal(JSON.stringify("something"));
-    } else {
-      fail("expected parsing to fail");
-    }
+    });
+    expect(r.err).to.be.true;
   });
 });
 
@@ -127,16 +123,11 @@ describe("allElements", () => {
   });
 
   it("should fail when one of the elements does not parse", () => {
-    const arr: unknown[] = ["a", 3];
-    const r = allElements(arr, string);
-    expect(r.ok).to.be.false;
-    if (r.ok === false) {
-      const pe = r.val;
+    const r = allElements(["a", 3], string).mapErr(pe => {
       expect(pe.expected).to.equal("string");
       expect(pe.path).to.equal("[1]");
-    } else {
-      fail("expected parsing to fail");
-    }
+    });
+    expect(r.err).to.be.true;
   });
 });
 
