@@ -11,12 +11,14 @@
     "skipLibCheck": true,
     "lib": ["es2015"],
     "strict": true,
-    "noImplicitReturns": true,
     "baseUrl": "./",
     // NOTE: Don't change this from es5 - we use this to allow callable classes.
     "target": "es5",
     "forceConsistentCasingInFileNames": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "noImplicitReturns": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "./dist", "src/**/*.spec.ts"]
