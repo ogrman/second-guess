@@ -1,19 +1,19 @@
 {
   "name": "paranoia",
-  "homepage": "https://github.com/larohr/paranoia",
-  "repository": "https://github.com/larohr/paranoia",
-  "author": {
-    "name": "Lars Norman",
-    "email": "larohr@gmail.com",
-    "url": "http://larr.se/"
-  },
   "version": "0.1.0",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "description": "A parser for already parsed JSON",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/larohr/paranoia.git"
+  },
   "scripts": {
     "build": "tsc --declaration --project tsconfig.build.json",
     "test": "jest"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "type": "module",
   "devDependencies": {
     "@types/chai": "^4.3.3",
