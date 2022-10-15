@@ -1,11 +1,11 @@
 {
-  "name": "paranoia",
+  "name": "second-guess",
   "version": "0.1.0",
   "description": "A parser for already parsed JSON",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/larohr/paranoia.git"
+    "url": "https://github.com/larohr/second-guess.git"
   },
   "scripts": {
     "build": "npm run clean && npm run build:ts && npm run build:copy",

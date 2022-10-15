@@ -1,5 +1,5 @@
 {
-  "name": "paranoia",
+  "name": "second-guess",
   "version": "0.1.0",
   "description": "A parser for already parsed JSON",
   "main": "index.js",
@@ -14,7 +14,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ogrman/paranoia"
+    "url": "https://github.com/ogrman/second-guess"
   },
   "readme": "README.md"
 }
