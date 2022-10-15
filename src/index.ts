@@ -166,15 +166,9 @@ export function allKeys<T>(
   return new Ok(result);
 }
 
-type PropertyType<T, PropertyName extends keyof T> = T[PropertyName];
-
 type Parsed<T> = {
   [PropertyName in keyof T]: Parse<T[PropertyName]>
 };
-
-function f(x: { x: string }): Parsed<{x: string}> {
-  return { x: stringVal };
-}
 
 export function extractKeys<T>(
   record: Record<string, unknown>,
