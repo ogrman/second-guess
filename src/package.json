@@ -1,0 +1,20 @@
+{
+  "name": "paranoia",
+  "version": "0.1.0",
+  "description": "A parser for already parsed JSON",
+  "main": "index.js",
+  "module": "./esm/index.js",
+  "types": "index.d.ts",
+  "keywords": [
+    "Typescript",
+    "Error Handling",
+    "Parser"
+  ],
+  "author": "ogrman",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ogrman/paranoia"
+  },
+  "readme": "README.md"
+}
