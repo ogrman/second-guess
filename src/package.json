@@ -1,6 +1,6 @@
 {
   "name": "second-guess",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A parser for already parsed JSON",
   "main": "index.js",
   "module": "./esm/index.js",
@@ -16,5 +16,8 @@
     "type": "git",
     "url": "https://github.com/ogrman/second-guess"
   },
-  "readme": "README.md"
+  "readme": "README.md",
+  "dependencies": {
+    "ts-results": "^3.3.0"
+  }
 }

@@ -15,6 +15,12 @@ contained subtle bugs or incorrect structure, and when converting the game to
 TypeScript I didn't want to handle it by just casting all of these documents
 to the preferred time.
 
+# Installation
+
+```
+npm install second-guess
+```
+
 ## Examples
 
 You wish.
