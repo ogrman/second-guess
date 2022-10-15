@@ -24,7 +24,7 @@ function parseError(
   };
 }
 
-export function string(x: unknown): Result<string> {
+export function stringVal(x: unknown): Result<string> {
   if (typeof x === "string") {
     return new Ok(x);
   } else {
@@ -32,7 +32,7 @@ export function string(x: unknown): Result<string> {
   }
 }
 
-export function number(x: unknown): Result<number> {
+export function numberVal(x: unknown): Result<number> {
   if (typeof x === "number") {
     return new Ok(x);
   } else {
@@ -40,7 +40,7 @@ export function number(x: unknown): Result<number> {
   }
 }
 
-export function boolean(x: unknown): Result<boolean> {
+export function booleanVal(x: unknown): Result<boolean> {
   if (typeof x === "boolean") {
     return new Ok(x);
   } else {
@@ -136,11 +136,11 @@ export function allElements<T>(
     if (r.ok === true) {
       result.push(r.val);
     } else if (r.ok === false) {
-      return new Err(parseError(
-        indexedPath(i, r.val.path),
-        r.val.expected,
-        r.val.found,
-      ));
+      return new Err({
+        path: indexedPath(i, r.val.path),
+        expected: r.val.expected,
+        found: r.val.found,
+      });
     }
   }
   return new Ok(result);
@@ -156,11 +156,43 @@ export function allKeys<T>(
     if (r.ok === true) {
       result[key] = r.val;
     } else if (r.ok === false) {
-      return new Err(parseError(
-        indexedPath(key, r.val.path),
-        r.val.expected,
-        r.val.found,
-      ));
+      return new Err({
+        path: indexedPath(key, r.val.path),
+        expected: r.val.expected,
+        found: r.val.found,
+      });
+    }
+  }
+  return new Ok(result);
+}
+
+type PropertyType<T, PropertyName extends keyof T> = T[PropertyName];
+
+type Parsed<T> = {
+  [PropertyName in keyof T]: Parse<T[PropertyName]>
+};
+
+function f(x: { x: string }): Parsed<{x: string}> {
+  return { x: stringVal };
+}
+
+export function extractKeys<T>(
+  record: Record<string, unknown>,
+  parsed: Parsed<T>,
+): Result<T> {
+  const result = {} as T; // unsafe
+  for (const property in parsed) {
+    const parser = parsed[property];
+    const parseResult = parser(record[property]);
+    if (parseResult.ok === true) {
+      result[property] = parseResult.val;
+    } else if (parseResult.ok === false) {
+      const err = parseResult.val;
+      return new Err({
+        path: memberPath(property, err.path),
+        expected: err.expected,
+        found: err.found,
+      });
     }
   }
   return new Ok(result);

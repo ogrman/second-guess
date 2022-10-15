@@ -1,51 +1,70 @@
 import * as chai from 'chai';
 import { Err, Ok, Result } from 'ts-results';
-
 import {
   allElements,
+  allKeys,
   array,
-  boolean,
+  booleanVal,
   emptyVal,
+  extractKeys,
   member,
   nullVal,
-  number,
+  numberVal,
   object,
   optional,
   or,
   ParseError,
-  string,
-  undefinedVal
+  stringVal,
+  undefinedVal,
 } from '.';
 
 const expect = chai.expect;
 
-describe("string", () => {
+describe("stringVal", () => {
   it("should parse a string", () => {
-    expect(string("test").unwrap()).to.equal("test");
+    expect(stringVal("test").unwrap()).to.equal("test");
   });
 
   it("should fail when not receiving a string", () => {
-    expect(string(3).err).be.true;
+    const val = 3;
+    const result = stringVal(val).mapErr(err => {
+      expect(err.expected).to.equal("string");
+      expect(err.found).to.equal(JSON.stringify(val));
+      expect(err.path).to.equal("");
+    })
+    expect(result.err).to.be.true;
   });
 });
 
-describe("number", () => {
+describe("numberVal", () => {
   it("should parse a number", () => {
-    expect(number(3).unwrap()).to.equal(3);
+    expect(numberVal(3).unwrap()).to.equal(3);
   });
 
   it("should fail when not receiving a number", () => {
-    expect(number("horse").err).to.be.true;
+    const val = "horse";
+    const result = numberVal(val).mapErr(err => {
+      expect(err.expected).to.equal("number");
+      expect(err.found).to.equal(JSON.stringify(val));
+      expect(err.path).to.equal("");
+    })
+    expect(result.err).to.be.true;
   });
 });
 
-describe("boolean", () => {
+describe("booleanVal", () => {
   it("should parse a number", () => {
-    expect(boolean(false).unwrap()).to.equal(false);
+    expect(booleanVal(false).unwrap()).to.equal(false);
   });
 
   it("should fail when not receiving a boolean", () => {
-    expect(boolean({"monkey": true}).err).to.be.true;
+    const val = { "monkey": true };
+    const result = booleanVal(val).mapErr(err => {
+      expect(err.expected).to.equal("boolean");
+      expect(err.found).to.equal(JSON.stringify(val));
+      expect(err.path).to.equal("");
+    })
+    expect(result.err).to.be.true;
   });
 });
 
@@ -56,7 +75,12 @@ describe("object", () => {
   });
 
   it("should fail when not receiving an Object", () => {
-    expect(object(["clown"]).err).to.be.true;
+    const result = object(["clown"]).mapErr(err => {
+      expect(err.expected).to.equal("Object");
+      expect(err.found).to.equal("[\"clown\"]");
+      expect(err.path).to.equal("");
+    })
+    expect(result.err).to.be.true;
   })
 });
 
@@ -66,8 +90,13 @@ describe("array", () => {
     expect(array(x).unwrap()).to.eql(["cat"]);
   });
 
-  it("should fail when not receiving an Object", () => {
-    expect(array("clown").err).to.be.true;
+  it("should fail when not receiving an Array", () => {
+    const result = array("clown").mapErr(err => {
+      expect(err.expected).to.equal("Array");
+      expect(err.found).to.equal("\"clown\"");
+      expect(err.path).to.equal("");
+    })
+    expect(result.err).to.be.true;
   })
 });
 
@@ -77,7 +106,12 @@ describe("undefinedVal", () => {
   });
 
   it("shoould fail when not receiving undefined", () => {
-    expect(undefinedVal(null).err).to.be.true;
+    const result = undefinedVal(3).mapErr(err => {
+      expect(err.expected).to.equal("undefined");
+      expect(err.found).to.equal("3");
+      expect(err.path).to.equal("");
+    });
+    expect(result.err).to.be.true;
   });
 });
 
@@ -87,18 +121,28 @@ describe("nullVal", () => {
   });
 
   it("should fail when not receiving null", () => {
-    expect(nullVal(3).err).to.be.true;
+    const result = nullVal(3).mapErr(err => {
+      expect(err.expected).to.equal("null");
+      expect(err.found).to.equal("3");
+      expect(err.path).to.equal("");
+    });
+    expect(result.err).to.be.true;
   });
 });
 
 describe("optional", () => {
   it("should parse an optional value", () => {
-    expect(optional(string)("hello").unwrap()).to.equal("hello");
-    expect(optional(string)(undefined).unwrap()).to.equal(undefined);
+    expect(optional(stringVal)("hello").unwrap()).to.equal("hello");
+    expect(optional(stringVal)(undefined).unwrap()).to.equal(undefined);
   });
 
   it("should fail when parsing fails", () => {
-    expect(optional(string)(3).err).to.be.true;
+    const result = optional(stringVal)(3).mapErr(err => {
+      expect(err.expected).to.equal("string or undefined");
+      expect(err.found).to.equal("3");
+      expect(err.path).to.equal("");
+    });
+    expect(result.err).to.be.true;
   });
 });
 
@@ -112,47 +156,142 @@ describe("emptyVal", () => {
   });
 
   it("should fail when value is non-empty", () => {
-    expect(emptyVal(3, null).err).to.be.true;
+    const result = emptyVal(3, null);
+    result.mapErr(err => {
+      expect(err.expected).to.equal("undefined or null");
+      expect(err.found).to.equal("3");
+      expect(err.path).to.equal("");
+    });
+    expect(result.err).to.be.true;
   });
 });
 
 describe("or", () => {
   it("should return the first success when both succeed", () => {
-    expect(or(x => new Ok(1), x => new Ok(2))("something").unwrap())
+    expect(or(
+      _ => new Ok(1),
+      _ => new Ok(2),
+    )("something").unwrap())
       .to.equal(1);
   });
 
   it("should return the second when first fails", () => {
     expect(or(
-      x => new Err(null as ParseError),
-      x => new Ok(2),
+      _ => new Err(null as ParseError),
+      _ => new Ok(2),
     )("something").unwrap())
       .to.equal(2);
   });
 
   it("should combine both errors when both fail", () => {
-    const r = or(number, boolean)("something").mapErr(pe => {
-      expect(pe.expected).to.equal("number or boolean");
-      expect(pe.found).to.equal(JSON.stringify("something"));
+    const result = or(numberVal, booleanVal)("something").mapErr(err => {
+      expect(err.expected).to.equal("number or boolean");
+      expect(err.found).to.equal(JSON.stringify("something"));
+      expect(err.path).to.equals("");
     });
-    expect(r.err).to.be.true;
+    expect(result.err).to.be.true;
   });
 });
 
 describe("allElements", () => {
   it("should parse all elements in an array", () => {
     const arr: unknown[] = ["a", "b"];
-    const r = allElements(arr, string);
-    expect(r.ok).to.be.true;
-    expect(r.unwrap()).to.eql(["a", "b"]);
+    const result = allElements(arr, stringVal);
+    expect(result.ok).to.be.true;
+    expect(result.unwrap()).to.eql(["a", "b"]);
   });
 
   it("should fail when one of the elements does not parse", () => {
-    const r = allElements(["a", 3], string).mapErr(pe => {
-      expect(pe.expected).to.equal("string");
-      expect(pe.path).to.equal("[1]");
+    const result = allElements(["a", 3], stringVal).mapErr(err => {
+      expect(err.expected).to.equal("string");
+      expect(err.found).to.equal("3");
+      expect(err.path).to.equal("[1]");
     });
-    expect(r.err).to.be.true;
+    expect(result.err).to.be.true;
+  });
+});
+
+describe("allKeys", () => {
+  it("should parse all keys in an Object", () => {
+    const obj: Record<string, unknown> = { a: "1", b: "2", c: "3"};
+    const result = allKeys(obj, stringVal);
+    expect(result.ok).to.be.true;
+    expect(result.unwrap()).to.eql({ a: "1", b: "2", c: "3" });
+  });
+
+  it("should fail when one of the elements does not parse", () => {
+    const obj: Record<string, unknown> = { a: "1", b: 4, c: "3"};
+    const result = allKeys(obj, stringVal);
+    result.mapErr(err => {
+      expect(err.expected).to.equal("string");
+      expect(err.found).to.equal("4");
+      expect(err.path).to.equal("[\"b\"]");
+    });
+    expect(result.err).to.be.true;
+  });
+});
+
+describe("member", () => {
+  it("should parse a member", () => {
+    const obj: Record<string, unknown> = { a: 1, b: 2 };
+    const result = member(obj, "b", numberVal);
+    expect(result.unwrap()).to.equal(2);
+  });
+
+  it("should fail when the member does not parse", () => {
+    const obj: Record<string, unknown> = { a: 1, b: "two" };
+    const result = member(obj, "b", numberVal).mapErr(err => {
+      expect(err.expected).to.equal("number");
+      expect(err.found).to.equal("\"two\"");
+      expect(err.path).to.equal("b");
+    });
+    expect(result.err).to.be.true;
+  });
+
+  it("should fail when the member does not exist", () => {
+    const obj: Record<string, unknown> = { a: 1 };
+    const result = member(obj, "b", numberVal).mapErr(err => {
+      expect(err.expected).to.equal("number");
+      expect(err.found).to.equal("undefined");
+      expect(err.path).to.equal("b");
+    });
+    expect(result.err).to.be.true;
+  });
+});
+
+describe("extract", () => {
+  it("should extract a field from an Object", () => {
+    const object: Record<string, unknown> = { x: "horse" };
+    expect(extractKeys(object, { x: stringVal }).unwrap())
+      .to.eql({ x: "horse" });
+  });
+
+  it("should extract several fields from an Object", () => {
+    const object: Record<string, unknown> = { x: "horse", y: "goat", z: 7 };
+    expect(extractKeys(object, { x: stringVal, z: numberVal, }).unwrap())
+      .to.eql({ x: "horse", z: 7 });
+  });
+
+  it("should fail when a member is not found", () => {
+    const object: Record<string, unknown> = { x: "horse" };
+    const result = extractKeys(object, { y: numberVal });
+    result.mapErr(err => {
+      expect(err.expected).to.equal("number");
+      expect(err.found).to.equal("undefined");
+      expect(err.path).to.equal("y")
+    });
+    expect(result.err).to.be.true;
+  });
+
+  it("should fail when a parsing a member fails", () => {
+    const object: Record<string, unknown> = { a: 3, x: "horse" };
+    const result = extractKeys(object, { a: stringVal, x: stringVal });
+    result.mapErr(err => {
+      expect(err.expected).to.equal("string");
+      expect(err.found).to.equal("3");
+      expect(err.path).to.equal("a");
+    });
+    expect(result.err).to.be.true;
   });
 });
 
@@ -169,10 +308,10 @@ describe("parsing structures", () => {
       zz: [5, false],
     };
     const result: Result<Test, ParseError> = object(source)
-      .andThen(record => member(record, "x", number)
-          .andThen(x => member(record, "y", string)
+      .andThen(record => member(record, "x", numberVal)
+          .andThen(x => member(record, "y", stringVal)
             .andThen(y => member(record, "zz", array)
-              .andThen(zz => allElements(zz, or(number, boolean))
+              .andThen(zz => allElements(zz, or(numberVal, booleanVal))
                 .map(zz => ({
                   x: x,
                   y: y,
@@ -181,21 +320,4 @@ describe("parsing structures", () => {
     expect(result.ok).to.be.true;
     expect(source).to.eql(result.val);
   }); 
-});
-
-describe("examples", () => {
-  it("parse a number", () => {
-    console.log(number(3));
-    console.log(number("horse"));
-  });
-
-  it("parse an object with fields", () => {
-    const parse = (x: unknown) => object(x)
-      .andThen(record => member(record, "x", number)
-        .andThen(x => member(record, "y", string)
-          .map(y => ({ x, y }))));
-
-    console.log(parse({ x: 3, y: "banana" }));
-    console.log(parse({ x: 3 }));
-  });
 });
