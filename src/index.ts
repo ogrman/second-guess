@@ -88,11 +88,11 @@ export function or<T, U>(
     const r1 = p1(x);
     if (r1.ok === true) {
       return new Ok(r1.val);
-    } else if (r1.ok === false) {
+    } else {
       const r2 = p2(x);
       if (r2.ok == true) {
         return r2;
-      } else if (r2.ok === false) {
+      } else {
         const expected = [r1.val.expected, r2.val.expected].join(" or ");
         return new Err(parseError("", expected, x));
       }
@@ -116,7 +116,7 @@ export function member<T>(
   const result = parse(x[name]);
   if (result.ok === true) {
     return result;
-  } else if (result.ok === false) {
+  } else {
     const err = result.val;
     return new Err({
       path: memberPath(name, err.path),
@@ -150,12 +150,12 @@ export function allKeys<T>(
   record: Record<string, unknown>,
   parse: Parse<T>,
 ): Result<Record<string, T>> {
-  const result = {};
+  const result: Record<string, T> = {};
   for (const key in record) {
     const r = parse(record[key]);
     if (r.ok === true) {
       result[key] = r.val;
-    } else if (r.ok === false) {
+    } else {
       return new Err({
         path: indexedPath(key, r.val.path),
         expected: r.val.expected,

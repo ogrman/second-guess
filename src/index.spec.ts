@@ -177,7 +177,7 @@ describe("or", () => {
 
   it("should return the second when first fails", () => {
     expect(or(
-      _ => new Err(null as ParseError),
+      _ => new Err({ expected: "", found: "", path: "" }),
       _ => new Ok(2),
     )("something").unwrap())
       .to.equal(2);
