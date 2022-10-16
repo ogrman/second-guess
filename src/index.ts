@@ -86,11 +86,11 @@ export function or<T, U>(
 ): Parse<T | U> {
   return x => {
     const r1 = p1(x);
-    if (r1.ok === true) {
+    if (r1.ok) {
       return new Ok(r1.val);
     } else {
       const r2 = p2(x);
-      if (r2.ok == true) {
+      if (r2.ok) {
         return r2;
       } else {
         const expected = [r1.val.expected, r2.val.expected].join(" or ");
@@ -114,7 +114,7 @@ export function member<T>(
   parse: Parse<T>,
 ): Result<T> {
   const result = parse(x[name]);
-  if (result.ok === true) {
+  if (result.ok) {
     return result;
   } else {
     const err = result.val;
@@ -133,9 +133,9 @@ export function allElements<T>(
   const result = [];
   for (let i = 0; i < array.length; ++i) {
     const r = parse(array[i]);
-    if (r.ok === true) {
+    if (r.ok) {
       result.push(r.val);
-    } else if (r.ok === false) {
+    } else {
       return new Err({
         path: indexedPath(i, r.val.path),
         expected: r.val.expected,
@@ -153,7 +153,7 @@ export function allKeys<T>(
   const result: Record<string, T> = {};
   for (const key in record) {
     const r = parse(record[key]);
-    if (r.ok === true) {
+    if (r.ok) {
       result[key] = r.val;
     } else {
       return new Err({
@@ -180,7 +180,7 @@ export function extractKeys<T>(
     const parseResult = parser(record[property]);
     if (parseResult.ok === true) {
       result[property] = parseResult.val;
-    } else if (parseResult.ok === false) {
+    } else {
       const err = parseResult.val;
       return new Err({
         path: memberPath(property, err.path),
