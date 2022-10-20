@@ -148,15 +148,15 @@ describe("optional", () => {
 
 describe("emptyVal", () => {
   it("should parse null", () => {
-    expect(emptyVal(null, undefined).unwrap()).to.eql(undefined);
+    expect(emptyVal(undefined)(null).unwrap()).to.equal(undefined);
   });
 
   it("should parse undefined", () => {
-    expect(emptyVal(undefined, null).unwrap()).to.eql(null);
+    expect(emptyVal(null)(undefined).unwrap()).to.equal(null);
   });
 
   it("should fail when value is non-empty", () => {
-    const result = emptyVal(3, null);
+    const result = emptyVal(null)(3);
     result.mapErr(err => {
       expect(err.expected).to.equal("undefined or null");
       expect(err.found).to.equal("3");
@@ -196,13 +196,13 @@ describe("or", () => {
 describe("allElements", () => {
   it("should parse all elements in an array", () => {
     const arr: unknown[] = ["a", "b"];
-    const result = allElements(arr, stringVal);
+    const result = allElements(stringVal)(arr);
     expect(result.ok).to.be.true;
     expect(result.unwrap()).to.eql(["a", "b"]);
   });
 
   it("should fail when one of the elements does not parse", () => {
-    const result = allElements(["a", 3], stringVal).mapErr(err => {
+    const result = allElements(stringVal)(["a", 3]).mapErr(err => {
       expect(err.expected).to.equal("string");
       expect(err.found).to.equal("3");
       expect(err.path).to.equal("[1]");
@@ -214,14 +214,14 @@ describe("allElements", () => {
 describe("allKeys", () => {
   it("should parse all keys in an Object", () => {
     const obj: Record<string, unknown> = { a: "1", b: "2", c: "3"};
-    const result = allKeys(obj, stringVal);
+    const result = allKeys(stringVal)(obj);
     expect(result.ok).to.be.true;
     expect(result.unwrap()).to.eql({ a: "1", b: "2", c: "3" });
   });
 
   it("should fail when one of the elements does not parse", () => {
     const obj: Record<string, unknown> = { a: "1", b: 4, c: "3"};
-    const result = allKeys(obj, stringVal);
+    const result = allKeys(stringVal)(obj);
     result.mapErr(err => {
       expect(err.expected).to.equal("string");
       expect(err.found).to.equal("4");
@@ -262,19 +262,19 @@ describe("member", () => {
 describe("extract", () => {
   it("should extract a field from an Object", () => {
     const object: Record<string, unknown> = { x: "horse" };
-    expect(extractKeys(object, { x: stringVal }).unwrap())
+    expect(extractKeys({ x: stringVal })(object).unwrap())
       .to.eql({ x: "horse" });
   });
 
   it("should extract several fields from an Object", () => {
     const object: Record<string, unknown> = { x: "horse", y: "goat", z: 7 };
-    expect(extractKeys(object, { x: stringVal, z: numberVal, }).unwrap())
+    expect(extractKeys({ x: stringVal, z: numberVal, })(object).unwrap())
       .to.eql({ x: "horse", z: 7 });
   });
 
   it("should fail when a member is not found", () => {
     const object: Record<string, unknown> = { x: "horse" };
-    const result = extractKeys(object, { y: numberVal });
+    const result = extractKeys({ y: numberVal })(object);
     result.mapErr(err => {
       expect(err.expected).to.equal("number");
       expect(err.found).to.equal("undefined");
@@ -285,7 +285,7 @@ describe("extract", () => {
 
   it("should fail when a parsing a member fails", () => {
     const object: Record<string, unknown> = { a: 3, x: "horse" };
-    const result = extractKeys(object, { a: stringVal, x: stringVal });
+    const result = extractKeys({ a: stringVal, x: stringVal })(object);
     result.mapErr(err => {
       expect(err.expected).to.equal("string");
       expect(err.found).to.equal("3");
@@ -311,7 +311,7 @@ describe("parsing structures", () => {
       .andThen(record => member(record, "x", numberVal)
           .andThen(x => member(record, "y", stringVal)
             .andThen(y => member(record, "zz", array)
-              .andThen(zz => allElements(zz, or(numberVal, booleanVal))
+              .andThen(zz => allElements(or(numberVal, booleanVal))(zz)
                 .map(zz => ({
                   x: x,
                   y: y,

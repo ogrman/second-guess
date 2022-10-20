@@ -22,7 +22,7 @@ function exampleOne() {
   }
 
   const animalParser = (x: unknown) => object(x)
-    .andThen(x => extractKeys(x, {
+    .andThen(obj => extractKeys({
       type: x => stringVal(x)
         .andThen(x => {
           if (x === "horse" || x === "duck") {
@@ -39,7 +39,7 @@ function exampleOne() {
       age: numberVal,
       licensedToKill: booleanVal,
       nickname: optional(stringVal),
-    }));
+    })(obj));
   
   const unknownAnimal: unknown = {
     type: "horse",
@@ -88,7 +88,7 @@ function exampleOne() {
   };
 
   const myAnimals = array([unknownAnimal, unknownFowl] as unknown)
-    .andThen(array => allElements(array, animalParser))
+    .andThen(array => allElements(animalParser)(array))
     .unwrap();
 
   console.log(myAnimals);
@@ -115,7 +115,7 @@ function exampleOne() {
     "a": unknownAnimal,
     "b": unknownFowl,
   } as unknown)
-    .andThen(object => allKeys(object, animalParser))
+    .andThen(object => allKeys(animalParser)(object))
     .unwrap();
 
   console.log(animalRegistry);
@@ -143,7 +143,7 @@ function exampleOne() {
     "b": unknownFowl,
     "c": { "bananas": "yes" },
   } as unknown)
-    .andThen(object => allKeys(object, animalParser))
+    .andThen(object => allKeys(animalParser)(object))
     .mapErr(err => console.log(err));
 
   // =>

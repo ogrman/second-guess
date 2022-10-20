@@ -1,6 +1,6 @@
 {
   "name": "second-guess",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "A parser for already parsed JSON",
   "main": "index.js",
   "module": "./esm/index.js",

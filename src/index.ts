@@ -2,7 +2,7 @@ import { Ok, Err, Result as TsResult } from 'ts-results';
 import { indexedPath, memberPath } from './internal';
 
 export type Result<T> = TsResult<T, ParseError>
-export type Parse<T> = (x: unknown) => Result<T>;
+export type Parse<Output, Input = unknown> = (x: Input) => Result<Output>;
 
 export interface ParseError {
   path: string,
@@ -104,8 +104,8 @@ export function optional<T>(parse: Parse<T>): Parse<T | undefined> {
   return or(parse, undefinedVal);
 }
 
-export function emptyVal<T>(x: unknown, produce: T): Result<T> {
-  return or(undefinedVal, nullVal)(x).map(_ => produce);
+export function emptyVal<T>(defaultValue: T): Parse<T> {
+  return x => or(undefinedVal, nullVal)(x).map(_ => defaultValue);
 }
 
 export function member<T>(
@@ -127,67 +127,70 @@ export function member<T>(
 }
 
 export function allElements<T>(
-  array: unknown[],
   parse: Parse<T>,
-): Result<T[]> {
-  const result = [];
-  for (let i = 0; i < array.length; ++i) {
-    const r = parse(array[i]);
-    if (r.ok) {
-      result.push(r.val);
-    } else {
-      return new Err({
-        path: indexedPath(i, r.val.path),
-        expected: r.val.expected,
-        found: r.val.found,
-      });
+): Parse<T[], unknown[]> {
+  return array => {
+    const result = [];
+    for (let i = 0; i < array.length; ++i) {
+      const r = parse(array[i]);
+      if (r.ok) {
+        result.push(r.val);
+      } else {
+        return new Err({
+          path: indexedPath(i, r.val.path),
+          expected: r.val.expected,
+          found: r.val.found,
+        });
+      }
     }
+    return new Ok(result);
   }
-  return new Ok(result);
 }
 
 export function allKeys<T>(
-  record: Record<string, unknown>,
   parse: Parse<T>,
-): Result<Record<string, T>> {
-  const result: Record<string, T> = {};
-  for (const key in record) {
-    const r = parse(record[key]);
-    if (r.ok) {
-      result[key] = r.val;
-    } else {
-      return new Err({
-        path: indexedPath(key, r.val.path),
-        expected: r.val.expected,
-        found: r.val.found,
-      });
+): Parse<Record<string, T>, Record<string, unknown>> {
+  return record => {
+    const result: Record<string, T> = {};
+    for (const key in record) {
+      const r = parse(record[key]);
+      if (r.ok) {
+        result[key] = r.val;
+      } else {
+        return new Err({
+          path: indexedPath(key, r.val.path),
+          expected: r.val.expected,
+          found: r.val.found,
+        });
+      }
     }
+    return new Ok(result);
   }
-  return new Ok(result);
 }
 
 type Parsed<T> = {
-  [PropertyName in keyof T]: Parse<T[PropertyName]>
+  [PropertyName in keyof T]: Parse<T[PropertyName]>;
 };
 
 export function extractKeys<T>(
-  record: Record<string, unknown>,
   parsed: Parsed<T>,
-): Result<T> {
-  const result = {} as T; // unsafe
-  for (const property in parsed) {
-    const parser = parsed[property];
-    const parseResult = parser(record[property]);
-    if (parseResult.ok === true) {
-      result[property] = parseResult.val;
-    } else {
-      const err = parseResult.val;
-      return new Err({
-        path: memberPath(property, err.path),
-        expected: err.expected,
-        found: err.found,
-      });
+): Parse<T, Record<string, unknown>> {
+  return record => {
+    const result = {} as T; // unsafe
+    for (const property in parsed) {
+      const parser = parsed[property];
+      const parseResult = parser(record[property]);
+      if (parseResult.ok === true) {
+        result[property] = parseResult.val;
+      } else {
+        const err = parseResult.val;
+        return new Err({
+          path: memberPath(property, err.path),
+          expected: err.expected,
+          found: err.found,
+        });
+      }
     }
+    return new Ok(result);
   }
-  return new Ok(result);
 }
