@@ -1,3 +1,8 @@
+# 2.0.2
+
+- Add the chain parser to chain two parsers together, the second accepting
+  the output from the first
+
 # 2.0.1
 
 - Update example to use better parser combination from version 2.0.0

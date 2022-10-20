@@ -100,6 +100,13 @@ export function or<T, U>(
   }
 }
 
+export function chain<ParseOutput, ParseInput, TransformOutput>(
+  parse: Parse<ParseOutput, ParseInput>,
+  transform: Parse<TransformOutput, ParseOutput>,
+): Parse<TransformOutput, ParseInput> {
+  return x => parse(x).andThen(transform);
+}
+
 export function optional<T>(parse: Parse<T>): Parse<T | undefined> {
   return or(parse, undefinedVal);
 }

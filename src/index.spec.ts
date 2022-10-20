@@ -5,6 +5,7 @@ import {
   allKeys,
   array,
   booleanVal,
+  chain,
   emptyVal,
   extractKeys,
   member,
@@ -189,6 +190,37 @@ describe("or", () => {
       expect(err.found).to.equal(JSON.stringify("something"));
       expect(err.path).to.equals("");
     });
+    expect(result.err).to.be.true;
+  });
+});
+
+describe("chain", () => {
+  it("should return the transformed value", () => {
+    const result = chain(numberVal, (x: number) => new Ok(x.toString()))(5);
+    expect(result.unwrap()).to.equal("5");
+  });
+
+  it("it should return the first error if first parser fails", () => {
+    const result = chain(numberVal, (x: number) => new Ok(x.toString()))("5")
+      .mapErr(err => {
+        expect(err.expected).to.equal("number");
+        expect(err.found).to.equal(JSON.stringify("5"));
+        expect(err.path).to.equals("");
+      });
+    expect(result.err).to.be.true;
+  });
+
+  it("it should return the first error if first parser fails", () => {
+    const result = chain(numberVal, (_: number) => new Err({
+      expected: "horse",
+      found: "duck",
+      path: "",
+    }))(5)
+      .mapErr(err => {
+        expect(err.expected).to.equal("horse");
+        expect(err.found).to.equal("duck");
+        expect(err.path).to.equals("");
+      });
     expect(result.err).to.be.true;
   });
 });

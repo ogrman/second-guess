@@ -4,6 +4,7 @@ import {
   allKeys,
   array,
   booleanVal,
+  chain,
   extractKeys,
   numberVal,
   object,
@@ -23,18 +24,17 @@ function exampleOne() {
 
   const animalParser = (x: unknown) => object(x)
     .andThen(extractKeys({
-      type: x => stringVal(x)
-        .andThen(x => {
-          if (x === "horse" || x === "duck") {
-            return new Ok(x as "horse" | "duck");
-          } else {
-            return new Err({
-              expected: "horse or duck",
-              found: JSON.stringify(x),
-              path: "",
-            })
-          }
-        }),
+      type: chain(stringVal, x => {
+        if (x === "horse" || x === "duck") {
+          return new Ok(x as "horse" | "duck");
+        } else {
+          return new Err({
+            expected: "horse or duck",
+            found: JSON.stringify(x),
+            path: "",
+          })
+        }
+      }),
       name: stringVal,
       age: numberVal,
       licensedToKill: booleanVal,
