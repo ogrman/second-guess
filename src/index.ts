@@ -109,20 +109,21 @@ export function emptyVal<T>(defaultValue: T): Parse<T> {
 }
 
 export function member<T>(
-  x: Record<string, unknown>,
   name: string,
   parse: Parse<T>,
-): Result<T> {
-  const result = parse(x[name]);
-  if (result.ok) {
-    return result;
-  } else {
-    const err = result.val;
-    return new Err({
-      path: memberPath(name, err.path),
-      expected: err.expected,
-      found: err.found
-    });
+): Parse<T, Record<string, unknown>> {
+  return x => {
+    const result = parse(x[name]);
+    if (result.ok) {
+      return result;
+    } else {
+      const err = result.val;
+      return new Err({
+        path: memberPath(name, err.path),
+        expected: err.expected,
+        found: err.found
+      });
+    }
   }
 }
 

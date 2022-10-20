@@ -234,13 +234,13 @@ describe("allKeys", () => {
 describe("member", () => {
   it("should parse a member", () => {
     const obj: Record<string, unknown> = { a: 1, b: 2 };
-    const result = member(obj, "b", numberVal);
+    const result = member("b", numberVal)(obj);
     expect(result.unwrap()).to.equal(2);
   });
 
   it("should fail when the member does not parse", () => {
     const obj: Record<string, unknown> = { a: 1, b: "two" };
-    const result = member(obj, "b", numberVal).mapErr(err => {
+    const result = member("b", numberVal)(obj).mapErr(err => {
       expect(err.expected).to.equal("number");
       expect(err.found).to.equal("\"two\"");
       expect(err.path).to.equal("b");
@@ -250,7 +250,7 @@ describe("member", () => {
 
   it("should fail when the member does not exist", () => {
     const obj: Record<string, unknown> = { a: 1 };
-    const result = member(obj, "b", numberVal).mapErr(err => {
+    const result = member("b", numberVal)(obj).mapErr(err => {
       expect(err.expected).to.equal("number");
       expect(err.found).to.equal("undefined");
       expect(err.path).to.equal("b");
@@ -308,15 +308,15 @@ describe("parsing structures", () => {
       zz: [5, false],
     };
     const result: Result<Test, ParseError> = object(source)
-      .andThen(record => member(record, "x", numberVal)
-          .andThen(x => member(record, "y", stringVal)
-            .andThen(y => member(record, "zz", array)
-              .andThen(zz => allElements(or(numberVal, booleanVal))(zz)
-                .map(zz => ({
-                  x: x,
-                  y: y,
-                  zz: zz,
-                }))))));
+      .andThen(record => member("x", numberVal)(record)
+        .andThen(x => member("y", stringVal)(record)
+          .andThen(y => member("zz", array)(record)
+            .andThen(allElements(or(numberVal, booleanVal)))
+              .andThen(zz => new Ok({
+                x,
+                y,
+                zz,
+              })))));
     expect(result.ok).to.be.true;
     expect(source).to.eql(result.val);
   }); 
