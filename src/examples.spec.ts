@@ -26,7 +26,7 @@ function exampleOne() {
     .andThen(extractKeys({
       type: chain(stringVal, x => {
         if (x === "horse" || x === "duck") {
-          return new Ok(x as "horse" | "duck");
+          return new Ok(x as typeof x);
         } else {
           return new Err({
             expected: "horse or duck",
