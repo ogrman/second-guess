@@ -1,11 +1,11 @@
 import { Err, Ok, Result } from 'ts-results';
 import {
   allElements,
-  allKeys,
+  allFields,
   array,
   booleanVal,
   chain,
-  extractKeys,
+  fields,
   numberVal,
   object,
   optional,
@@ -23,7 +23,7 @@ function exampleOne() {
   }
 
   const animalParser = (x: unknown) => object(x)
-    .andThen(extractKeys({
+    .andThen(fields({
       type: chain(stringVal, x => {
         if (x === "horse" || x === "duck") {
           return new Ok(x as typeof x);
@@ -32,7 +32,7 @@ function exampleOne() {
             expected: "horse or duck",
             found: JSON.stringify(x),
             path: "",
-          })
+          });
         }
       }),
       name: stringVal,
@@ -115,7 +115,7 @@ function exampleOne() {
     "a": unknownAnimal,
     "b": unknownFowl,
   } as unknown)
-    .andThen(allKeys(animalParser))
+    .andThen(allFields(animalParser))
     .unwrap();
 
   console.log(animalRegistry);
@@ -143,7 +143,7 @@ function exampleOne() {
     "b": unknownFowl,
     "c": { "bananas": "yes" },
   } as unknown)
-    .andThen(allKeys(animalParser))
+    .andThen(allFields(animalParser))
     .mapErr(err => console.log(err));
 
   // =>

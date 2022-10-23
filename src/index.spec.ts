@@ -2,18 +2,20 @@ import * as chai from 'chai';
 import { Err, Ok, Result } from 'ts-results';
 import {
   allElements,
-  allKeys,
+  allFields,
   array,
   booleanVal,
   chain,
+  elements,
   emptyVal,
-  extractKeys,
+  fields,
   member,
   nullVal,
   numberVal,
   object,
   optional,
   or,
+  Parse,
   ParseError,
   stringVal,
   undefinedVal,
@@ -243,17 +245,17 @@ describe("allElements", () => {
   });
 });
 
-describe("allKeys", () => {
+describe("allFields", () => {
   it("should parse all keys in an Object", () => {
     const obj: Record<string, unknown> = { a: "1", b: "2", c: "3"};
-    const result = allKeys(stringVal)(obj);
+    const result = allFields(stringVal)(obj);
     expect(result.ok).to.be.true;
     expect(result.unwrap()).to.eql({ a: "1", b: "2", c: "3" });
   });
 
   it("should fail when one of the elements does not parse", () => {
     const obj: Record<string, unknown> = { a: "1", b: 4, c: "3"};
-    const result = allKeys(stringVal)(obj);
+    const result = allFields(stringVal)(obj);
     result.mapErr(err => {
       expect(err.expected).to.equal("string");
       expect(err.found).to.equal("4");
@@ -291,22 +293,22 @@ describe("member", () => {
   });
 });
 
-describe("extract", () => {
+describe("fields", () => {
   it("should extract a field from an Object", () => {
     const object: Record<string, unknown> = { x: "horse" };
-    expect(extractKeys({ x: stringVal })(object).unwrap())
+    expect(fields({ x: stringVal })(object).unwrap())
       .to.eql({ x: "horse" });
   });
 
   it("should extract several fields from an Object", () => {
     const object: Record<string, unknown> = { x: "horse", y: "goat", z: 7 };
-    expect(extractKeys({ x: stringVal, z: numberVal, })(object).unwrap())
+    expect(fields({ x: stringVal, z: numberVal, })(object).unwrap())
       .to.eql({ x: "horse", z: 7 });
   });
 
   it("should fail when a member is not found", () => {
     const object: Record<string, unknown> = { x: "horse" };
-    const result = extractKeys({ y: numberVal })(object);
+    const result = fields({ y: numberVal })(object);
     result.mapErr(err => {
       expect(err.expected).to.equal("number");
       expect(err.found).to.equal("undefined");
@@ -317,13 +319,52 @@ describe("extract", () => {
 
   it("should fail when a parsing a member fails", () => {
     const object: Record<string, unknown> = { a: 3, x: "horse" };
-    const result = extractKeys({ a: stringVal, x: stringVal })(object);
+    const result = fields({ a: stringVal, x: stringVal })(object);
     result.mapErr(err => {
       expect(err.expected).to.equal("string");
       expect(err.found).to.equal("3");
       expect(err.path).to.equal("a");
     });
     expect(result.err).to.be.true;
+  });
+});
+
+describe("elements", () => {
+  it("should extract a tuple", () => {
+    const values: unknown[] = [3, "four", undefined, false];
+    expect(elements([
+      numberVal,
+      stringVal,
+      optional(numberVal),
+      booleanVal,
+    ])(values).unwrap())
+      .to.eql([3, "four", undefined, false]);
+  });
+
+  it("should fail when an element can't be parsed", () => {
+    const values: unknown[] = [3, "four"];
+    const result = elements([numberVal, numberVal])(values).mapErr(err => {
+      expect(err.expected).to.equal("number");
+      expect(err.found).to.equal("\"four\"");
+      expect(err.path).to.equal("[1]");
+    });
+    expect(result.err).to.be.true;
+  });
+
+  it("should fail when received tuple is too short", () => {
+    const values: unknown[] = [3];
+    const result = elements([numberVal, stringVal])(values).mapErr(err => {
+      expect(err.expected).to.equal("string");
+      expect(err.found).to.equal("undefined");
+      expect(err.path).to.equal("[1]");
+    });
+    expect(result.err).to.be.true;
+  });
+
+  it("should not allow ommission of elements", () => {
+    type Test = [number, string];
+    // const parser: Parse<Test> = elements([numberVal, stringVal]);
+
   });
 });
 

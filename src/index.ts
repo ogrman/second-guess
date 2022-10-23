@@ -155,7 +155,7 @@ export function allElements<T>(
   }
 }
 
-export function allKeys<T>(
+export function allFields<T>(
   parse: Parse<T>,
 ): Parse<Record<string, T>, Record<string, unknown>> {
   return record => {
@@ -176,12 +176,12 @@ export function allKeys<T>(
   }
 }
 
-type Parsed<T> = {
-  [PropertyName in keyof T]: Parse<T[PropertyName]>;
+type MappedObject<Object> = {
+  [Key in keyof Object]: Parse<Object[Key]>;
 };
 
-export function extractKeys<T>(
-  parsed: Parsed<T>,
+export function fields<T extends {}>(
+  parsed: MappedObject<T>,
 ): Parse<T, Record<string, unknown>> {
   return record => {
     const result = {} as T; // unsafe
@@ -200,5 +200,34 @@ export function extractKeys<T>(
       }
     }
     return new Ok(result);
-  }
+  };
+}
+
+type MappedTuple<Tuple extends [...any[]]> = {
+  [Index in keyof Tuple]: Parse<Tuple[Index]>
+} & {
+  length: Tuple["length"],
+};
+
+export function elements<T extends [...any[]]>(
+  parsed: MappedTuple<T>,
+): Parse<T, unknown[]> {
+  return array => {
+    const result = [] as any as T; // unsafe
+    for (let index = 0; index < parsed.length; ++index) {
+      const parser = parsed[index];
+      const parseResult = parser(array[index]);
+      if (parseResult.ok === true) {
+        result[index] = parseResult.val;
+      } else {
+        const err = parseResult.val;
+        return new Err({
+          path: indexedPath(index, err.path),
+          expected: err.expected,
+          found: err.found,
+        });
+      }
+    }
+    return new Ok(result);
+  };
 }
