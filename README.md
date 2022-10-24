@@ -35,7 +35,7 @@ interface Animal {
 }
 
 const animalParser = (x: unknown) => object(x)
-  .andThen(extractKeys({
+  .andThen(fields({
     type: chain(stringVal, x => {
       if (x === "horse" || x === "duck") {
         return new Ok(x as typeof x);
@@ -44,7 +44,7 @@ const animalParser = (x: unknown) => object(x)
           expected: "horse or duck",
           found: JSON.stringify(x),
           path: "",
-        })
+        });
       }
     }),
     name: stringVal,
@@ -127,7 +127,7 @@ const animalRegistry = object({
   "a": unknownAnimal,
   "b": unknownFowl,
 } as unknown)
-  .andThen(allKeys(animalParser))
+  .andThen(allFields(animalParser))
   .unwrap();
 
 console.log(animalRegistry);
@@ -155,11 +155,47 @@ object({
   "b": unknownFowl,
   "c": { "bananas": "yes" },
 } as unknown)
-  .andThen(allKeys(animalParser))
+  .andThen(allFields(animalParser))
   .mapErr(err => console.log(err));
 
 // =>
 // { path: '["c"].type', expected: 'string', found: 'undefined' }
+```
+
+Parsing and transforming a tuple:
+
+```javascript
+  type MyTuple = [string, number, number | undefined];
+
+  // Type annotation needed to appease the TS compiler:
+  const parseMyTuple: Parse<MyTuple> = (x: unknown) => array(x)
+    .andThen(elements<MyTuple>([stringVal, numberVal, optional(numberVal)]));
+
+  const tuple = parseMyTuple(["hello", 3] as unknown).unwrap();
+
+  console.log(tuple);
+
+  // =>
+  // [ 'hello', 3, undefined ]
+
+  // Can be used to destructure and transform:
+  interface MyStruct {
+    horseName: string,
+    horseAge: number,
+    carrotQuota: number | undefined,
+  }
+
+  const parseMyStruct: Parse<MyStruct> = (x: unknown) =>
+    parseMyTuple(x)
+      .map(tuple => {
+        const [horseName, horseAge, carrotQuota] = tuple;
+        return { horseName, horseAge, carrotQuota };
+      });
+
+    console.log(parseMyStruct(["Blaze", 13, 4]).unwrap());
+
+    // =>
+    // { horseName: 'Blaze', horseAge: 13, carrotQuota: 4 }
 ```
 
 ## Attribution
