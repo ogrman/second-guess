@@ -1,3 +1,12 @@
+# 0.3.0
+
+- Change name of `extractKeys` to `fields`
+- Change name of `allKeys` to `keys`
+- Add `elements` parser to destructure arrays (tuples)
+- Add tests that verifies that certain code does not compile to release
+  process
+- Add example for parsing a tuple
+
 # 0.2.3
 
 - Updated examples

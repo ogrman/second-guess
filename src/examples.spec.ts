@@ -5,10 +5,12 @@ import {
   array,
   booleanVal,
   chain,
+  elements,
   fields,
   numberVal,
   object,
   optional,
+  Parse,
   ParseError,
   stringVal,
 } from '.';
@@ -150,8 +152,46 @@ function exampleOne() {
   // { path: '["c"].type', expected: 'string', found: 'undefined' }
 }
 
+function exampleTwo() {
+  type MyTuple = [string, number, number | undefined];
+
+  // Type annotation needed to appease the TS compiler:
+  const parseMyTuple: Parse<MyTuple> = (x: unknown) => array(x)
+    .andThen(elements<MyTuple>([stringVal, numberVal, optional(numberVal)]));
+
+  const tuple = parseMyTuple(["hello", 3] as unknown).unwrap();
+
+  console.log(tuple);
+
+  // =>
+  // [ 'hello', 3, undefined ]
+
+  // Can be used to destructure and transform:
+  interface MyStruct {
+    horseName: string,
+    horseAge: number,
+    carrotQuota: number | undefined,
+  }
+
+  const parseMyStruct: Parse<MyStruct> = (x: unknown) =>
+    parseMyTuple(x)
+      .map(tuple => {
+        const [horseName, horseAge, carrotQuota] = tuple;
+        return { horseName, horseAge, carrotQuota };
+      });
+
+    console.log(parseMyStruct(["Blaze", 13, 4]).unwrap());
+
+    // =>
+    // { horseName: 'Blaze', horseAge: 13, carrotQuota: 4 }
+}
+
 describe("example one", () => {
   it("executes example one", () => {
     exampleOne();
+  })
+
+  it("executes example two", () => {
+    exampleTwo();
   })
 });
