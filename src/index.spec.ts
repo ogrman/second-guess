@@ -360,12 +360,6 @@ describe("elements", () => {
     });
     expect(result.err).to.be.true;
   });
-
-  it("should not allow ommission of elements", () => {
-    type Test = [number, string];
-    // const parser: Parse<Test> = elements([numberVal, stringVal]);
-
-  });
 });
 
 describe("parsing structures", () => {

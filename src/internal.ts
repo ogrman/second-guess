@@ -5,6 +5,8 @@ export function indexedPath(here: string | number, inner: string): string {
 
   if (inner === "") {
     return herePart;
+  } else if (inner.startsWith("[")) {
+    return `${herePart}${inner}`;
   } else {
     return `${herePart}.${inner}`;
   }
