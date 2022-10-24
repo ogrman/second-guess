@@ -1,3 +1,7 @@
+# 0.3.1
+
+- Update examples in README.md
+
 # 0.3.0
 
 - Change name of `extractKeys` to `fields`
