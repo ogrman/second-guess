@@ -180,10 +180,10 @@ function exampleTwo() {
         return { horseName, horseAge, carrotQuota };
       });
 
-    console.log(parseMyStruct(["Blaze", 13, 4]).unwrap());
+  console.log(parseMyStruct(["Blaze", 13, 4]).unwrap());
 
-    // =>
-    // { horseName: 'Blaze', horseAge: 13, carrotQuota: 4 }
+  // =>
+  // { horseName: 'Blaze', horseAge: 13, carrotQuota: 4 }
 }
 
 describe("example one", () => {
