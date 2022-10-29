@@ -205,8 +205,6 @@ export function fields<T extends {}>(
 
 type MappedTuple<Tuple extends [...any[]]> = {
   [Index in keyof Tuple]: Parse<Tuple[Index]>
-} & {
-  length: Tuple["length"],
 };
 
 export function elements<T extends [...any[]]>(
