@@ -203,15 +203,17 @@ export function fields<T extends {}>(
   };
 }
 
-type MappedTuple<Tuple extends [...any[]]> = {
-  [Index in keyof Tuple]: Parse<Tuple[Index]>
+type MappedTuple<Tuple extends [...unknown[]]> = {
+  [Index in keyof Tuple]: Parse<Tuple[Index], unknown>
+} & {
+  length: Tuple['length'],
 };
 
-export function elements<T extends [...any[]]>(
+export function elements<T extends [...unknown[]]>(
   parsed: MappedTuple<T>,
 ): Parse<T, unknown[]> {
   return array => {
-    const result = [] as any as T; // unsafe
+    const result = [];
     for (let index = 0; index < parsed.length; ++index) {
       const parser = parsed[index];
       const parseResult = parser(array[index]);
@@ -226,6 +228,6 @@ export function elements<T extends [...any[]]>(
         });
       }
     }
-    return new Ok(result);
+    return new Ok(result as T); // unsafe
   };
 }

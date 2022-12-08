@@ -327,6 +327,12 @@ describe("fields", () => {
     });
     expect(result.err).to.be.true;
   });
+
+  it("should infer the correct type when parsing fields", () => {
+    const object: Record<string, unknown> = { a: 3, b: 4 };
+    const result = fields({ a: numberVal, b: optional(numberVal) })(object);
+    const _: { a: number, b: number | undefined } = result.unwrap();
+  });
 });
 
 describe("elements", () => {

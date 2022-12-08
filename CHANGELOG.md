@@ -1,3 +1,8 @@
+# 0.4.0
+
+- Add elements function to extract tuples
+- Tuples require explicit type annotation, see examples
+
 # 0.3.1
 
 - Update examples in README.md
