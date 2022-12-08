@@ -194,6 +194,16 @@ describe("or", () => {
     });
     expect(result.err).to.be.true;
   });
+
+  it("should accept any input type as long as they are the same", () => {
+    const output = array([1, "b"])
+      .andThen(or(
+        elements([numberVal, stringVal]),
+        elements([numberVal, booleanVal]),
+      ))
+      .unwrap();
+    expect(output).to.eql([1, "b"]);
+  });
 });
 
 describe("chain", () => {
@@ -363,6 +373,7 @@ describe("elements", () => {
       expect(err.expected).to.equal("string");
       expect(err.found).to.equal("undefined");
       expect(err.path).to.equal("[1]");
+      return err;
     });
     expect(result.err).to.be.true;
   });

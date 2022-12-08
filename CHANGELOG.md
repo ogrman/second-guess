@@ -1,3 +1,8 @@
+# 0.4.1
+
+- Allow `or` to accept inputs other than `unknown`
+- Version 0.4.0 was previously published by mistake and thus skipped
+
 # 0.3.2
 
 - Add tests

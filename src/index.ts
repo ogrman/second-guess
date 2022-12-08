@@ -80,10 +80,10 @@ export function nullVal(x: unknown): Result<null> {
   }
 }
 
-export function or<T, U>(
-  p1: Parse<T>,
-  p2: Parse<U>,
-): Parse<T | U> {
+export function or<T, U, V>(
+  p1: Parse<T, V>,
+  p2: Parse<U, V>,
+): Parse<T | U, V> {
   return x => {
     const r1 = p1(x);
     if (r1.ok) {
